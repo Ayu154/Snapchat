@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lohani</title>
+    <style>
+        #video {
+            width: 100%;
+            max-width: 500px;
+        }
+        #canvas {
+            display: none;
+        }
+        #photo {
+            width: 100%;
+            max-width: 500px;
+        }
+        /* Button Style */
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #ff9a03;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        /* Button Hover Effect */
+        .button:hover {
+            background-color: #ffd900;
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <h1 style="color: brown;">Snap-Lohani CHAT<i style="color:black;"><br>(Allow the access of camera to click photo)</i></h1>
+        <video id="video" autoplay></video>
+        <button id="snap" class="button">Snap Photo</button>
+        <button id="record" class="button">Snap Video</button>
+        <canvas id="canvas" width="500" height="375"></canvas>
+        <video id="recorded" controls style="display: none;"></video>
+        <img id="photo" src="#" alt="Your photo">
+    </center>
+    <script>
+        let stream;
+
+        // Access the device camera and stream the video
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(streamObj) {
+                stream = streamObj;
+                var video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(err) {
+                console.log("An error occurred: " + err);
+            });
+
+        // Take a photo when the snap button is clicked
+        var snapButton = document.getElementById('snap');
+        snapButton.addEventListener('click', function() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var photo = document.getElementById('photo');
+            
+            // Draw the current frame of the video onto the canvas
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert the canvas to an image and display it
+            var dataURL = canvas.toDataURL('image/png');
+            photo.setAttribute('src', dataURL);
+
+            // Create a download link for the photo
+            var a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'photo.png';
+            a.click();
+        });
+
+        // Record a video when the record button is clicked
+        var recordButton = document.getElementById('record');
+        recordButton.addEventListener('click', function() {
+            var video = document.getElementById('video');
+            var recordedVideo = document.getElementById('recorded');
+            var chunks = [];
+
+            var mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = function(event) {
+                chunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = function() {
+                var blob = new Blob(chunks, { 'type' : 'video/mp4' });
+                recordedVideo.src = window.URL.createObjectURL(blob);
+                recordedVideo.style.display = 'block';
+
+                // Create a download link for the recorded video
+                var a = document.createElement('a');
+                a.href = recordedVideo.src;
+                a.download = 'video.mp4';
+                a.click();
+            };
+
+            mediaRecorder.start();
+
+            setTimeout(function() {
+                mediaRecorder.stop();
+            }, 5000); // Record for 5 seconds, you can adjust this value as needed
+        });
+    </script>
+</body>
+</html>
